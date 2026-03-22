@@ -1,0 +1,19 @@
+# backup-tm configuration
+# Copy this file to ~/.config/backup-tm/config and edit as needed.
+# install.sh creates this file automatically.
+
+# Name of the external backup volume (must be mounted at /Volumes/<VOLUME_NAME>)
+VOLUME_NAME="BackupDisk"
+
+# Disk identifier for APFS-encrypted volumes (e.g. disk2s1).
+# Find it with: diskutil list | grep -B1 <VOLUME_NAME>
+# Leave empty if the drive is unencrypted or must be mounted manually before backup.
+# When set, backup.sh will unlock the volume automatically using a passphrase
+# stored in the macOS Keychain (service=backup-tm, account=<VOLUME_NAME>).
+# Store the passphrase with:
+#   security add-generic-password -s backup-tm -a "<VOLUME_NAME>" -w
+DISK_IDENTIFIER=""
+
+# Daily backup schedule (24-hour clock)
+SCHEDULE_HOUR="14"
+SCHEDULE_MINUTE="0"

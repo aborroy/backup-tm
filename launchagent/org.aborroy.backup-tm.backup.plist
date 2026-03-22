@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+  <key>Label</key>
+  <string>org.aborroy.backup-tm.backup</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__HOME__/scripts/backup.sh</string>
+  </array>
+
+  <!-- Daily schedule — set SCHEDULE_HOUR and SCHEDULE_MINUTE in ~/.config/backup-tm/config -->
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>   <integer>__HOUR__</integer>
+    <key>Minute</key> <integer>__MINUTE__</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>__HOME__/Library/Logs/backup-launchd.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>__HOME__/Library/Logs/backup-launchd-error.log</string>
+
+  <key>ProcessType</key>
+  <string>Background</string>
+
+</dict>
+</plist>
