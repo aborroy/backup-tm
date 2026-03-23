@@ -121,7 +121,7 @@ echo "---"
 if $IS_RUNNING; then
   echo "Stop Backup | bash=${HOME}/scripts/backup-stop.sh terminal=false refresh=true color=red"
 else
-  echo "Run Backup Now | bash=/usr/bin/open param1=-g param2=-a param3=${HOME}/scripts/BackupRunner.app terminal=false refresh=true"
+  echo "Run Backup Now | bash=/bin/launchctl param1=kickstart param2=-k param3=gui/$(id -u)/org.aborroy.backup-tm.backup terminal=false refresh=true"
 fi
 
 echo "---"

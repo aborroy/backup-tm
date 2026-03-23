@@ -12,7 +12,8 @@
     <string>/usr/bin/open</string>
     <string>-g</string>
     <string>-a</string>
-    <string>__HOME__/scripts/BackupRunner.app</string>
+    <string>/System/Applications/Utilities/Terminal.app</string>
+    <string>__HOME__/scripts/backup.sh</string>
   </array>
 
   <!-- Daily schedule — set SCHEDULE_HOUR and SCHEDULE_MINUTE in ~/.config/backup-tm/config -->

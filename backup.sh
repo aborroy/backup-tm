@@ -29,12 +29,20 @@ EXCLUDES=(
   ".Trash"
   "Library/Caches"
   "Library/Application Support/com.apple.sharedfilelist"
+  "Library/Application Support/FileProvider/*/wharf/tombstone"
+  "Library/Application Support/Firefox/Profiles/*.default*/cert8.db"
+  "Library/Application Support/Firefox/Profiles/*.default*/key3.db"
+  "Library/Application Support/Firefox/Profiles/*.default*/secmod.db"
   "Library/Mail"
   "Library/Photos"
   "Library/Containers/com.apple.mail"
+  "Library/Containers/com.microsoft.teams2/Data/tmp"
   "Library/Messages"
   "Library/Application Support/MobileSync"
   "Library/CloudStorage"
+  "Library/Google/GoogleSoftwareUpdate/Stats"
+  "Library/Group Containers/group.com.apple.CoreSpeech/Caches/onDeviceCompilationCaches"
+  "Library/Group Containers/group.com.apple.secure-control-center-preferences"
   ".BurpSuite/updates"
   ".antigravity"
   "*.tmp"
@@ -60,6 +68,18 @@ set_status() { printf '%s\n' "$1" > "${STATUS_FILE}"; }
 cleanup() {
   rm -f "${PROGRESS_FILE}" "${STATUS_FILE}"
   rm -rf "${LOCK_DIR}"
+}
+capture_manifest() {
+  local label="$1"
+  local output_file="$2"
+  shift 2
+
+  if "$@" > "${output_file}" 2>> "${LOG_FILE}"; then
+    log "  ✓ ${label}"
+  else
+    rm -f "${output_file}"
+    log "  ⚠ ${label} skipped"
+  fi
 }
 log_file_lines() {
   local file="$1"
@@ -176,29 +196,25 @@ log "Capturing installed software manifests..."
 
 MANIFEST_DIR="${DEST}/manifests"
 mkdir -p "${DEST}"
-rm -rf "${MANIFEST_DIR}"
-mkdir -p "${MANIFEST_DIR}"
+rm -rf "${MANIFEST_DIR}" 2>/dev/null || true
+mkdir -p "${MANIFEST_DIR}" || die "Unable to create manifest directory: ${MANIFEST_DIR}"
 rm -f "${DEST}/.backup-complete"
 touch "${DEST}/.backup-incomplete"
 
 if command -v mas &>/dev/null; then
   log "  Running mas list..."
-  mas list > "${MANIFEST_DIR}/appstore.txt"
-  log "  ✓ App Store apps"
+  capture_manifest "App Store apps" "${MANIFEST_DIR}/appstore.txt" mas list
 fi
 
-ls /Applications > "${MANIFEST_DIR}/applications.txt"
-log "  ✓ /Applications folder"
+capture_manifest "/Applications folder" "${MANIFEST_DIR}/applications.txt" ls /Applications
 
 if command -v brew &>/dev/null; then
   log "  Running brew list..."
-  brew list --formula > "${MANIFEST_DIR}/brew-formulae.txt"
-  brew list --cask    > "${MANIFEST_DIR}/brew-casks.txt"
-  log "  ✓ Homebrew formulae and casks"
+  capture_manifest "Homebrew formulae" "${MANIFEST_DIR}/brew-formulae.txt" brew list --formula
+  capture_manifest "Homebrew casks" "${MANIFEST_DIR}/brew-casks.txt" brew list --cask
 fi
 
-sw_vers > "${MANIFEST_DIR}/system.txt"
-log "  ✓ System info"
+capture_manifest "System info" "${MANIFEST_DIR}/system.txt" sw_vers
 system_profiler SPHardwareDataType >> "${MANIFEST_DIR}/system.txt" 2>/dev/null &
 PROFILER_PID=$!
 log "  (hardware profile running in background)"
@@ -246,7 +262,7 @@ fi
 
 # Append only the stats lines (filter out progress lines which start with spaces)
 if [[ -f "${RSYNC_LOG}" ]]; then
-  grep -v '^ ' "${RSYNC_LOG}" >> "${LOG_FILE}" || true
+  awk 'capture || /^Number of files:/ { capture=1; print }' "${RSYNC_LOG}" >> "${LOG_FILE}" || true
   FILES_SENT=$(awk '/Number of regular files transferred/{print $NF}' "${RSYNC_LOG}")
   BYTES_SENT=$(awk '/Total transferred file size/{$1=$2=$3=$4=""; print $0}' "${RSYNC_LOG}" | xargs)
   BYTES_TOTAL=$(awk '/Total file size/{$1=$2=$3=""; print $0}' "${RSYNC_LOG}" | xargs)
