@@ -5,6 +5,7 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS_DIR="${HOME}/scripts"
 PLUGINS_DIR="${HOME}/scripts/swiftbar-plugins"
+RUNNER_APP_NAME="BackupRunner.app"
 BACKUP_PLIST_NAME="org.aborroy.backup-tm.backup.plist"
 SWIFTBAR_PLIST_NAME="org.aborroy.backup-tm.swiftbar-autostart.plist"
 LAUNCH_AGENTS="${HOME}/Library/LaunchAgents"
@@ -87,6 +88,8 @@ cp "${REPO_DIR}/backup.sh" "${SCRIPTS_DIR}/backup.sh"
 chmod +x "${SCRIPTS_DIR}/backup.sh"
 cp "${REPO_DIR}/backup-stop.sh" "${SCRIPTS_DIR}/backup-stop.sh"
 chmod +x "${SCRIPTS_DIR}/backup-stop.sh"
+rm -rf "${SCRIPTS_DIR}/${RUNNER_APP_NAME}"
+cp -R "${REPO_DIR}/${RUNNER_APP_NAME}" "${SCRIPTS_DIR}/${RUNNER_APP_NAME}"
 
 # ── 4. SwiftBar plugin ────────────────────────────────────────
 echo "--> Installing SwiftBar plugin..."

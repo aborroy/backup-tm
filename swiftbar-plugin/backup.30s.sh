@@ -121,7 +121,7 @@ echo "---"
 if $IS_RUNNING; then
   echo "Stop Backup | bash=${HOME}/scripts/backup-stop.sh terminal=false refresh=true color=red"
 else
-  echo "Run Backup Now | bash=${HOME}/scripts/backup.sh terminal=false refresh=true"
+  echo "Run Backup Now | bash=/usr/bin/open param1=-g param2=-a param3=${HOME}/scripts/BackupRunner.app terminal=false refresh=true"
 fi
 
 echo "---"

@@ -33,7 +33,7 @@ The installer prompts for your configuration, then:
 1. Writes `~/.config/backup-tm/config` with your settings
 2. Installs Homebrew if missing
 3. Installs SwiftBar if missing
-4. Copies `backup.sh` and `backup-stop.sh` to `~/scripts/`
+4. Copies `backup.sh`, `backup-stop.sh`, and `BackupRunner.app` to `~/scripts/`
 5. Installs the SwiftBar plugin for the menu bar icon
 6. Registers the LaunchAgent to run the backup on your chosen daily schedule
 7. Registers a LaunchAgent to start SwiftBar automatically at login
@@ -86,7 +86,7 @@ The installer offers to do this for you during setup.
 Click the **TM** icon in the menu bar to:
 
 - See the last backup date and status (green = success, orange = partial or disk offline, red = never)
-- **Run Backup Now** — trigger an immediate backup
+- **Run Backup Now** — trigger an immediate backup via `BackupRunner.app`
 - **Stop Backup** — stop a running backup mid-run
 - **Open Log** — view the detailed log at `~/Library/Logs/backup.log`
 - **Reveal Backup Folder** — open the backup folder in Finder
@@ -95,6 +95,7 @@ Click the **TM** icon in the menu bar to:
 
 ```
 backup-tm/
+├── BackupRunner.app                                   # app wrapper used for scheduled/manual launches
 ├── backup.sh                                          # main rsync backup script
 ├── backup-stop.sh                                     # scoped stop helper (used by SwiftBar action)
 ├── config.example                                     # configuration template

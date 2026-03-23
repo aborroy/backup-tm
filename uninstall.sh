@@ -39,6 +39,7 @@ echo "--> Removing scripts..."
 rm -f "${HOME}/scripts/backup.sh"
 rm -f "${HOME}/scripts/backup-stop.sh"
 rm -f "${HOME}/scripts/swiftbar-plugins/backup.30s.sh"
+rm -rf "${HOME}/scripts/BackupRunner.app"
 
 echo ""
 echo "Done. SwiftBar and snapshots on the backup disk were left intact."

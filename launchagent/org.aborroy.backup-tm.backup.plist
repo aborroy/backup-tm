@@ -9,7 +9,10 @@
 
   <key>ProgramArguments</key>
   <array>
-    <string>__HOME__/scripts/backup.sh</string>
+    <string>/usr/bin/open</string>
+    <string>-g</string>
+    <string>-a</string>
+    <string>__HOME__/scripts/BackupRunner.app</string>
   </array>
 
   <!-- Daily schedule — set SCHEDULE_HOUR and SCHEDULE_MINUTE in ~/.config/backup-tm/config -->
@@ -25,8 +28,8 @@
   <key>StandardErrorPath</key>
   <string>__HOME__/Library/Logs/backup-launchd-error.log</string>
 
-  <key>ProcessType</key>
-  <string>Background</string>
+  <key>LimitLoadToSessionType</key>
+  <string>Aqua</string>
 
 </dict>
 </plist>
