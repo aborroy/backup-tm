@@ -29,6 +29,7 @@ pgrep -qf "[b]ackup.sh" && IS_RUNNING=true
 PCT=""
 PHASE=""
 PCT_AGE_MIN=""
+STATUS_AGE_MIN=""
 if $IS_RUNNING && [[ -f "${PROGRESS_FILE}" ]]; then
   PCT=$(< "${PROGRESS_FILE}")
   PCT_MTIME=$(stat -f %m "${PROGRESS_FILE}" 2>/dev/null || echo 0)
@@ -39,6 +40,11 @@ if $IS_RUNNING && [[ -f "${PROGRESS_FILE}" ]]; then
 fi
 if $IS_RUNNING && [[ -f "${STATUS_FILE}" ]]; then
   PHASE=$(< "${STATUS_FILE}")
+  STATUS_MTIME=$(stat -f %m "${STATUS_FILE}" 2>/dev/null || echo 0)
+  [[ -n "${NOW:-}" ]] || NOW=$(date +%s)
+  if [[ "${STATUS_MTIME}" -gt 0 ]]; then
+    STATUS_AGE_MIN=$(( (NOW - STATUS_MTIME) / 60 ))
+  fi
 fi
 if [[ -z "${PHASE}" && -n "${PCT}" ]]; then
   PHASE="rsync"
@@ -53,6 +59,15 @@ case "${PHASE}" in
   *) PHASE_LABEL="Running" ;;
 esac
 
+RSYNC_STALLED=false
+if $IS_RUNNING && [[ "${PHASE}" == "rsync" ]]; then
+  if [[ -n "${PCT_AGE_MIN}" && "${PCT_AGE_MIN}" -ge 10 ]]; then
+    RSYNC_STALLED=true
+  elif [[ -z "${PCT}" && -n "${STATUS_AGE_MIN}" && "${STATUS_AGE_MIN}" -ge 10 ]]; then
+    RSYNC_STALLED=true
+  fi
+fi
+
 TITLE="TM"
 HAS_SUCCESSFUL_BACKUP=false
 if $IS_RUNNING; then
@@ -61,6 +76,8 @@ if $IS_RUNNING; then
     if [[ -n "${PCT_AGE_MIN}" && "${PCT_AGE_MIN}" -ge 10 ]]; then
       TITLE="${TITLE} ${PCT_AGE_MIN}m"
     fi
+  elif [[ "${PHASE}" == "rsync" && "${RSYNC_STALLED}" == true ]]; then
+    TITLE="TM stalled"
   else
     TITLE="TM ${PHASE_LABEL}"
   fi
@@ -78,6 +95,10 @@ if $IS_RUNNING; then
     else
       echo "Status: ${PHASE_LABEL}… ${PCT} | color=#f5a623"
     fi
+  elif [[ "${PHASE}" == "rsync" && "${RSYNC_STALLED}" == true ]]; then
+    echo "Status: ${PHASE_LABEL} appears stalled; no progress update for ${STATUS_AGE_MIN}m | color=red"
+  elif [[ "${PHASE}" == "rsync" ]]; then
+    echo "Status: ${PHASE_LABEL}… waiting for first progress update | color=#f5a623"
   else
     echo "Status: ${PHASE_LABEL}… | color=#f5a623"
   fi
@@ -111,7 +132,7 @@ fi
 
 # Last log line (errors or summary)
 LAST_LOG=$(grep -E "ERROR|Total elapsed|DONE" "${LOG}" 2>/dev/null | tail -1 | sed 's/\[.*\] //')
-if [[ -n "${LAST_LOG}" ]] && { $HAS_SUCCESSFUL_BACKUP || [[ "${LAST_LOG}" != ERROR:* ]]; }; then
+if [[ -n "${LAST_LOG}" ]]; then
   echo "${LAST_LOG} | size=11 color=gray"
 fi
 

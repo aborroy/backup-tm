@@ -36,6 +36,7 @@ EXCLUDES=(
   "Library/Mail"
   "Library/Photos"
   "Library/Containers/com.apple.mail"
+  "Library/Containers/com.docker.docker/Data/vms/*/data/Docker.raw"
   "Library/Containers/com.microsoft.teams2/Data/tmp"
   "Library/Messages"
   "Library/Application Support/MobileSync"
@@ -88,7 +89,7 @@ log_file_lines() {
   while IFS= read -r line; do
     [[ -n "${line//[[:space:]]/}" ]] || continue
     log "  ${line}"
-  done < <(grep -E 'No space left|Permission denied|Operation not permitted|Input/output error|Result too large|rsync error|^rsync:' "${file}" | tail -n 10 || true)
+  done < <(tr '\r' '\n' < "${file}" | grep -E 'No space left|Permission denied|Operation not permitted|Input/output error|Result too large|rsync error|^rsync:' | tail -n 10 || true)
 }
 find_latest_legacy_snapshot() {
   if [[ -L "${LATEST_LINK}" && -d "${LATEST_LINK}" ]]; then
@@ -230,14 +231,29 @@ RSYNC_START=$(date +%s)
 RSYNC_LOG="${DEST}/rsync.log"
 RSYNC_EXIT=0
 RSYNC_PARTIAL=false
+rm -f "${PROGRESS_FILE}"
+set +e
 rsync -rlptgoD --delete --human-readable --stats --one-file-system \
   --info=progress2 \
   ${EXCLUDE_ARGS[@]+"${EXCLUDE_ARGS[@]}"} \
   "${SOURCE}" "${DEST}/" 2>&1 | tee "${RSYNC_LOG}" | \
-  tr '\r' '\n' | grep --line-buffered 'to-chk=' | \
-  sed 's/.*to-chk=\([0-9]*\)\/\([0-9]*\).*/\1 \2/' | \
-  awk '{total=$2; rem=$1; if (total>0) { printf "%d%%\n", (total-rem)/total*100; fflush() }}' | \
-  while IFS= read -r pct; do printf '%s\n' "${pct}" > "${PROGRESS_FILE}"; done || RSYNC_EXIT=$?
+  tr '\r' '\n' | \
+  awk '
+    match($0, /(to|ir)-chk=[0-9]+\/[0-9]+/) {
+      progress = substr($0, RSTART, RLENGTH)
+      sub(/^(to|ir)-chk=/, "", progress)
+      split(progress, counts, "/")
+      remaining = counts[1]
+      total = counts[2]
+      if (total > 0) {
+        printf "%d%%\n", ((total - remaining) / total) * 100
+        fflush()
+      }
+    }
+  ' | while IFS= read -r pct; do printf '%s\n' "${pct}" > "${PROGRESS_FILE}"; done
+PIPESTAT=("${PIPESTATUS[@]}")
+set -e
+RSYNC_EXIT="${PIPESTAT[0]}"
 if [[ "${RSYNC_EXIT}" -eq 23 ]]; then
   # Partial transfer: some files could not be transferred (permission errors, I/O errors, etc.)
   # This is a degraded run — do not mark as successful.
